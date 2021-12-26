@@ -1,0 +1,12 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.mysql
+  version: v1
+  metadata:
+    - name: connectionString
+      value: "java_app:pass@tcp(localhost:3306)/?allowNativePasswords=true"
+    - name: schemaName
+      value: "dapr_ked"

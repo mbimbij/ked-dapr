@@ -9,7 +9,7 @@ import java.util.Optional;
 public class TodoApp implements IGetThingsDone {
     private final IInvokeOtherService iInvokeOtherService;
     private final IStoreItemState iStoreItemState;
-    private final INotifyItemStateChange iNotifyItemStateChange;
+    private final INotifyStateChange iNotifyStateChange;
 
     @Override
     public void createItem(TodoItem todoItem) {

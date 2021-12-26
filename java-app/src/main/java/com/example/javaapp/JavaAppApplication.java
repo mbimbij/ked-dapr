@@ -2,10 +2,10 @@ package com.example.javaapp;
 
 import com.example.javaapp.core.IGetThingsDone;
 import com.example.javaapp.core.IInvokeOtherService;
-import com.example.javaapp.core.INotifyItemStateChange;
+import com.example.javaapp.core.INotifyStateChange;
 import com.example.javaapp.core.IStoreItemState;
 import com.example.javaapp.core.TodoApp;
-import com.example.javaapp.outputadapter.DaprItemStateChangeNotifier;
+import com.example.javaapp.outputadapter.DaprStateChangeNotifier;
 import com.example.javaapp.outputadapter.DaprOtherServiceInvoker;
 import com.example.javaapp.outputadapter.DaprStateStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +24,8 @@ public class JavaAppApplication {
     @Bean
     public IGetThingsDone iGetThingsDone(IInvokeOtherService iInvokeOtherService,
                                          IStoreItemState iStoreItemState,
-                                         INotifyItemStateChange iNotifyItemStateChange) {
-        return new TodoApp(iInvokeOtherService, iStoreItemState, iNotifyItemStateChange);
+                                         INotifyStateChange iNotifyStateChange) {
+        return new TodoApp(iInvokeOtherService, iStoreItemState, iNotifyStateChange);
     }
 
     @Bean
@@ -39,8 +39,8 @@ public class JavaAppApplication {
     }
 
     @Bean
-    public INotifyItemStateChange daprItemStateChangeNotifier(WebClient webClient) {
-        return new DaprItemStateChangeNotifier(webClient);
+    public INotifyStateChange daprItemStateChangeNotifier(WebClient webClient) {
+        return new DaprStateChangeNotifier(webClient);
     }
 
     @Bean

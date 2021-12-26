@@ -1,0 +1,88 @@
+version: "3.3"
+
+services:
+  mysql:
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dapr_ked
+      MYSQL_USER: java_app
+      MYSQL_PASSWORD: pass
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka:
+    image: confluentinc/cp-server:5.4.0
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "19092:19092"
+      - "29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_LISTENERS: PLAINTEXT_HOST://kafka:29092,PLAINTEXT://kafka:9092,OUTSIDE://kafka:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://kafka:29092, PLAINTEXT://kafka:9092,OUTSIDE://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.4.0
+    restart: always
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+  zipkin:
+    container_name: "zipkin_service"
+    image: "openzipkin/zipkin:2.23.2"
+    ports:
+      - "9411:9411"
+  java_app_sidecar:
+    image: "daprio/daprd:1.5.1"
+    restart: always
+#    ports:
+#      - "3500:3500"
+    command:
+      [
+          "./daprd",
+          "-app-id",
+          "java_app",
+          "-app-port",
+          "8080",
+          "-dapr-http-port",
+          "3500",
+          "-config",
+          "/dapr/config.yaml",
+          "-components-path",
+          "/dapr/components",
+      ]
+    volumes:
+      - "./dapr/local:/dapr"
+    network_mode: "host"
+
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  db_data:
+    driver: local

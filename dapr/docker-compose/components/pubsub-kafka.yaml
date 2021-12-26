@@ -1,0 +1,13 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: default
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    - name: brokers # Required. Kafka broker connection setting
+      value: "kafka:9092"
+    - name: authRequired # Required.
+      value: "false"
