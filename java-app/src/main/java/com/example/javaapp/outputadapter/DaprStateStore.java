@@ -48,7 +48,11 @@ public class DaprStateStore implements IStoreItemState {
 
     @Override
     public Mono<TodoItem> getById(int id) {
-        return null;
+        return webClient.get()
+                        .uri("/v1.0/state/statestore/" + id)
+                        .retrieve()
+                        .bodyToMono(DaprItem.class)
+                        .map(daprItem -> daprItem.toTodoItem(id));
     }
 
     @Override
