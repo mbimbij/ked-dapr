@@ -77,6 +77,24 @@ class TodoAppShould {
         });
     }
 
+    @Test
+    void notDeleteItem_whenItemDoesNotExist() {
+        // GIVEN
+        TodoItem todoItem = new TodoItem(itemId, name, state, otherValue);
+        doReturn(Mono.empty()).when(iStoreItemState).getById(anyInt());
+
+        // WHEN
+        todoApp.deleteById(itemId).block();
+        ItemDeletedEvent expectedEvent = new ItemDeletedEvent(itemId);
+
+        // THEN
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThatCode(() -> verify(iInvokeOtherService, never()).getOtherValue()).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).getById(eq(itemId))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iPublishStateChange, never()).publish(any())).doesNotThrowAnyException();
+        });
+    }
+
     private static class StateStoreMock implements IStoreItemState {
         private final int itemId;
 
