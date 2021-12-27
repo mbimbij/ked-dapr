@@ -26,17 +26,6 @@ public class DaprStateStore implements IStoreItemState {
     public Mono<TodoItem> createItem(NewTodoItem todoItem) {
         int itemId = nextItemId++;
         DaprSaveItemRequest createItemRequest = DaprSaveItemRequest.fromTodoItem(itemId, todoItem);
-//        return webClient.post()
-//                        .uri("/v1.0/state/statestore")
-//                        .bodyValue(List.of(createItemRequest))
-//                        .retrieve()
-//                        .bodyToMono(Void.class)
-//                        .then(
-//                                webClient.get()
-//                                       .uri("/v1.0/state/statestore/" + createItemRequest.getKey())
-//                                       .retrieve()
-//                                       .bodyToMono(DaprItem.class)
-//                                       .map(daprItem -> daprItem.toTodoItem(itemId)));
         return webClient.post()
                         .uri("/v1.0/state/statestore")
                         .bodyValue(List.of(createItemRequest))
@@ -72,7 +61,10 @@ public class DaprStateStore implements IStoreItemState {
 
     @Override
     public Mono<Void> deleteById(int id) {
-        return null;
+        return webClient.delete()
+                        .uri("/v1.0/state/statestore/" + id)
+                        .retrieve()
+                        .bodyToMono(Void.class);
     }
 
     @Value

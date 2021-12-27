@@ -126,4 +126,25 @@ class DaprStateStoreShouldIT {
                                                         .isEqualTo(expectedUpdatedItem))
                     .verifyComplete();
     }
+
+    @Test
+    void deleteAPreviouslyCreatedItem() {
+        // GIVEN
+        NewTodoItem newItem = new NewTodoItem(name, state, otherValue);
+        Mono<TodoItem> createResponse = daprStateStore.createItem(newItem);
+
+        // WHEN
+        Mono<TodoItem> deleteResponse = createResponse.flatMap(todoItem -> daprStateStore.deleteById(todoItem.getId())
+                                                                                         .thenReturn(todoItem));
+
+        // THEN
+        Mono<TodoItem> getDeletedItem = deleteResponse.flatMap(
+                todoItem -> webClient.get()
+                                     .uri("/v1.0/state/statestore/" + todoItem.getId())
+                                     .retrieve()
+                                     .bodyToMono(DaprItem.class)
+                                     .map(daprItem -> daprItem.toTodoItem(todoItem.getId())));
+
+        StepVerifier.create(getDeletedItem).verifyComplete();
+    }
 }
