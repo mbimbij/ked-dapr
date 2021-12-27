@@ -13,6 +13,6 @@ public class DaprOtherServiceInvoker implements IInvokeOtherService {
 
     @Override
     public Mono<String> getOtherValue() {
-        return null;
+        return Mono.just("some other value");
     }
 }
