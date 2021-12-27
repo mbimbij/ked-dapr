@@ -1,6 +1,7 @@
 package com.example.javaapp.core;
 
 import com.example.javaapp.core.events.ItemCreatedEvent;
+import com.example.javaapp.core.events.ItemDeletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -43,7 +44,9 @@ public class TodoApp implements IGetThingsDone {
     }
 
     @Override
-    public void deleteById(int id) {
-
+    public Mono<Void> deleteById(int id) {
+        return iStoreItemState.getById(id)
+                .map(todoItem -> new ItemDeletedEvent(id))
+                .flatMap(iPublishStateChange::publish);
     }
 }

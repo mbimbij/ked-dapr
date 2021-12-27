@@ -10,5 +10,5 @@ public interface IGetThingsDone {
     Optional<TodoItem> getById(int id);
     List<TodoItem> getAll();
     TodoItem updateItem(TodoItem updatedTodoItem);
-    void deleteById(int id);
+    Mono<Void> deleteById(int id);
 }

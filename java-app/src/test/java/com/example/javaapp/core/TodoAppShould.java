@@ -1,10 +1,9 @@
 package com.example.javaapp.core;
 
 import com.example.javaapp.core.events.ItemCreatedEvent;
+import com.example.javaapp.core.events.ItemDeletedEvent;
 import com.example.javaapp.utils.TestUtil;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -12,8 +11,11 @@ import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -43,7 +45,7 @@ class TodoAppShould {
     @Test
     void invokeTheOtherService_andSaveState_andPublishEvent_whenCreateItem() {
         // WHEN
-        todoApp.createItem(new CreateTodoItemRequest(name, state)).blockOptional();
+        todoApp.createItem(new CreateTodoItemRequest(name, state)).block();
         TodoItem expectedItem = new TodoItem(itemId, name, state, otherValue);
         ItemCreatedEvent expectedEvent = new ItemCreatedEvent(expectedItem);
 
@@ -51,6 +53,25 @@ class TodoAppShould {
         SoftAssertions.assertSoftly(softAssertions -> {
             softAssertions.assertThatCode(() -> verify(iInvokeOtherService).getOtherValue()).doesNotThrowAnyException();
             softAssertions.assertThatCode(() -> verify(iStoreItemState).createItem(any())).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iPublishStateChange)
+                    .publish(TestUtil.argThat(domainEvent -> assertThat(domainEvent).isEqualTo(expectedEvent)))).doesNotThrowAnyException();
+        });
+    }
+
+    @Test
+    void deleteItem_whenItemExists() {
+        // GIVEN
+        TodoItem todoItem = new TodoItem(itemId, name, state, otherValue);
+        doReturn(Mono.just(todoItem)).when(iStoreItemState).getById(anyInt());
+
+        // WHEN
+        todoApp.deleteById(itemId).block();
+        ItemDeletedEvent expectedEvent = new ItemDeletedEvent(itemId);
+
+        // THEN
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThatCode(() -> verify(iInvokeOtherService, never()).getOtherValue()).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).getById(eq(itemId))).doesNotThrowAnyException();
             softAssertions.assertThatCode(() -> verify(iPublishStateChange)
                     .publish(TestUtil.argThat(domainEvent -> assertThat(domainEvent).isEqualTo(expectedEvent)))).doesNotThrowAnyException();
         });
