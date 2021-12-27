@@ -59,8 +59,6 @@ services:
   java_app_sidecar:
     image: "daprio/daprd:1.5.1"
     restart: always
-#    ports:
-#      - "3500:3500"
     command:
       [
           "./daprd",

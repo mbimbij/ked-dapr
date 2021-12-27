@@ -10,6 +10,7 @@ import com.example.javaapp.outputadapter.DaprStateStore.DaprSaveItemRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,6 +20,8 @@ import reactor.test.StepVerifier;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.javaapp.outputadapter.DaprStateStore.STATESTORE_KEY_URI_FORMAT;
+import static com.example.javaapp.outputadapter.DaprStateStore.STATESTORE_URI_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = {JavaAppApplication.class})
@@ -29,6 +32,8 @@ class DaprStateStoreShouldIT {
     private IStoreItemState daprStateStore;
     @Autowired
     private WebClient webClient;
+    @Value("${dapr.statestore.name}")
+    String statestoreName;
     private String name;
     private final State state = State.TODO;
     private final String otherValue = "someOtherValue";
@@ -36,12 +41,13 @@ class DaprStateStoreShouldIT {
     @BeforeEach
     void setUp() {
         name = "someItem-" + UUID.randomUUID();
+        String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, itemId);
         Mono<TodoItem> cleanedItem = webClient.delete()
-                                              .uri("/v1.0/state/statestore/" + itemId)
+                                              .uri(uri)
                                               .retrieve()
                                               .bodyToMono(Void.class)
                                               .then(webClient.get()
-                                                             .uri("/v1.0/state/statestore/" + itemId)
+                                                             .uri(uri)
                                                              .retrieve()
                                                              .bodyToMono(DaprItem.class)
                                                              .map(daprItem -> daprItem.toTodoItem(itemId)));
@@ -61,11 +67,14 @@ class DaprStateStoreShouldIT {
 
         // THEN
         Mono<TodoItem> itemMono = createItemResponseMono.flatMap(
-                todoItem -> webClient.get()
-                                     .uri("/v1.0/state/statestore/" + todoItem.getId())
-                                     .retrieve()
-                                     .bodyToMono(DaprItem.class)
-                                     .map(daprItem -> daprItem.toTodoItem(todoItem.getId())));
+                todoItem -> {
+                    String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, todoItem.getId());
+                    return webClient.get()
+                                    .uri(uri)
+                                    .retrieve()
+                                    .bodyToMono(DaprItem.class)
+                                    .map(daprItem -> daprItem.toTodoItem(todoItem.getId()));
+                });
 
         StepVerifier.create(itemMono)
                     .assertNext(item -> assertThat(item).usingRecursiveComparison()
@@ -81,7 +90,7 @@ class DaprStateStoreShouldIT {
 
         List<DaprSaveItemRequest> saveItemRequest = List.of(DaprSaveItemRequest.fromTodoItem(itemId, new NewTodoItem(name, state, otherValue)));
         Mono<ResponseEntity<Void>> responseEntityMono = webClient.post()
-                                                                 .uri("/v1.0/state/statestore")
+                                                                 .uri(STATESTORE_URI_FORMAT.formatted(statestoreName))
                                                                  .bodyValue(saveItemRequest)
                                                                  .retrieve()
                                                                  .toEntity(Void.class);
@@ -115,7 +124,7 @@ class DaprStateStoreShouldIT {
         // THEN
         Mono<TodoItem> getUpdatedItem = updateResponse.flatMap(
                 todoItem -> webClient.get()
-                                     .uri("/v1.0/state/statestore/" + todoItem.getId())
+                                     .uri(STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, todoItem.getId()))
                                      .retrieve()
                                      .bodyToMono(DaprItem.class)
                                      .map(daprItem -> daprItem.toTodoItem(todoItem.getId())));
@@ -140,7 +149,7 @@ class DaprStateStoreShouldIT {
         // THEN
         Mono<TodoItem> getDeletedItem = deleteResponse.flatMap(
                 todoItem -> webClient.get()
-                                     .uri("/v1.0/state/statestore/" + todoItem.getId())
+                                     .uri(STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, todoItem.getId()))
                                      .retrieve()
                                      .bodyToMono(DaprItem.class)
                                      .map(daprItem -> daprItem.toTodoItem(todoItem.getId())));

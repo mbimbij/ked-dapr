@@ -34,8 +34,8 @@ public class JavaAppApplication {
     }
 
     @Bean
-    public IStoreItemState daprStateStore(WebClient webClient) {
-        return new DaprStateStore(webClient);
+    public IStoreItemState daprStateStore(WebClient webClient, @Value("${dapr.statestore.name}") String statestoreName) {
+        return new DaprStateStore(webClient, statestoreName);
     }
 
     @Bean

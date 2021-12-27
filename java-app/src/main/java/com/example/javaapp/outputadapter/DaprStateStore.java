@@ -15,19 +15,25 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public class DaprStateStore implements IStoreItemState {
-    private final WebClient webClient;
     private static int nextItemId = 0;
+    private final WebClient webClient;
+    private final String statestoreName;
 
-    public DaprStateStore(WebClient webClient) {
+    public static final String STATESTORE_URI_FORMAT = "/v1.0/state/%s";
+    public static final String STATESTORE_KEY_URI_FORMAT = "/v1.0/state/%s/%d";
+
+    public DaprStateStore(WebClient webClient, String statestoreName) {
         this.webClient = webClient;
+        this.statestoreName = statestoreName;
     }
 
     @Override
     public Mono<TodoItem> createItem(NewTodoItem todoItem) {
         int itemId = nextItemId++;
         DaprSaveItemRequest createItemRequest = DaprSaveItemRequest.fromTodoItem(itemId, todoItem);
+        String uri = STATESTORE_URI_FORMAT.formatted(statestoreName);
         return webClient.post()
-                        .uri("/v1.0/state/statestore")
+                        .uri(uri)
                         .bodyValue(List.of(createItemRequest))
                         .retrieve()
                         .bodyToMono(Void.class)
@@ -36,8 +42,9 @@ public class DaprStateStore implements IStoreItemState {
 
     @Override
     public Mono<TodoItem> getById(int id) {
+        String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, id);
         return webClient.get()
-                        .uri("/v1.0/state/statestore/" + id)
+                        .uri(uri)
                         .retrieve()
                         .bodyToMono(DaprItem.class)
                         .map(daprItem -> daprItem.toTodoItem(id));
@@ -51,8 +58,9 @@ public class DaprStateStore implements IStoreItemState {
     @Override
     public Mono<TodoItem> updateItem(TodoItem updatedTodoItem) {
         DaprSaveItemRequest updatedItem = DaprSaveItemRequest.fromTodoItem(updatedTodoItem);
+        String uri = STATESTORE_URI_FORMAT.formatted(statestoreName);
         return webClient.post()
-                        .uri("/v1.0/state/statestore")
+                        .uri(uri)
                         .bodyValue(List.of(updatedItem))
                         .retrieve()
                         .bodyToMono(Void.class)
@@ -61,8 +69,9 @@ public class DaprStateStore implements IStoreItemState {
 
     @Override
     public Mono<Void> deleteById(int id) {
+        String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, id);
         return webClient.delete()
-                        .uri("/v1.0/state/statestore/" + id)
+                        .uri(uri)
                         .retrieve()
                         .bodyToMono(Void.class);
     }
