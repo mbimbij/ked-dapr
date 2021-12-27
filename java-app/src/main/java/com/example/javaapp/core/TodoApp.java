@@ -1,11 +1,13 @@
 package com.example.javaapp.core;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
+@Slf4j
 public class TodoApp implements IGetThingsDone {
     private final IInvokeOtherService iInvokeOtherService;
     private final IStoreItemState iStoreItemState;

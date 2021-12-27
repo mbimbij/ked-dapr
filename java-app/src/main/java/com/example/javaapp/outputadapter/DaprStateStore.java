@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,8 +41,8 @@ public class DaprStateStore implements IStoreItemState {
                         .uri("/v1.0/state/statestore")
                         .bodyValue(List.of(createItemRequest))
                         .retrieve()
-                        .toEntity(Void.class)
-                        .map(responseEntity -> createItemRequest.toTodoItem());
+                        .bodyToMono(Void.class)
+                        .thenReturn(createItemRequest.toTodoItem());
     }
 
     @Override
@@ -62,7 +61,13 @@ public class DaprStateStore implements IStoreItemState {
 
     @Override
     public Mono<TodoItem> updateItem(TodoItem updatedTodoItem) {
-        return null;
+        DaprSaveItemRequest updatedItem = DaprSaveItemRequest.fromTodoItem(updatedTodoItem);
+        return webClient.post()
+                        .uri("/v1.0/state/statestore")
+                        .bodyValue(List.of(updatedItem))
+                        .retrieve()
+                        .bodyToMono(Void.class)
+                        .thenReturn(updatedItem.toTodoItem());
     }
 
     @Override
@@ -75,8 +80,15 @@ public class DaprStateStore implements IStoreItemState {
         String key;
         DaprItem value;
 
-        static DaprSaveItemRequest fromTodoItem(int itemId, NewTodoItem todoItem) {
+        static DaprSaveItemRequest fromTodoItem(int itemId, NewTodoItem newTodoItem) {
             return new DaprSaveItemRequest(Integer.toString(itemId),
+                                           new DaprItem(newTodoItem.getName(),
+                                                        newTodoItem.getState().toString(),
+                                                        newTodoItem.getOtherValue()));
+        }
+
+        static DaprSaveItemRequest fromTodoItem(TodoItem todoItem) {
+            return new DaprSaveItemRequest(Integer.toString(todoItem.getId()),
                                            new DaprItem(todoItem.getName(),
                                                         todoItem.getState().toString(),
                                                         todoItem.getOtherValue()));
