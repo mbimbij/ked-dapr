@@ -73,7 +73,7 @@ services:
       [
           "./daprd",
           "-app-id",
-          "java_app",
+          "plop",
           "-app-port",
           "8080",
           "-dapr-http-port",
