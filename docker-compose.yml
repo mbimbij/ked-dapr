@@ -13,6 +13,16 @@ services:
       MYSQL_DATABASE: dapr_ked
       MYSQL_USER: java_app
       MYSQL_PASSWORD: pass
+  redis:
+    image: docker.io/bitnami/redis:6.2
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
   zookeeper:
     image: confluentinc/cp-zookeeper:5.4.0
     environment:
@@ -83,4 +93,6 @@ volumes:
   kafka_data:
     driver: local
   db_data:
+    driver: local
+  redis_data:
     driver: local
