@@ -1,7 +1,10 @@
 package com.example.javaapp.core;
 
+import com.example.javaapp.core.events.ItemCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,11 +14,17 @@ import java.util.Optional;
 public class TodoApp implements IGetThingsDone {
     private final IInvokeOtherService iInvokeOtherService;
     private final IStoreItemState iStoreItemState;
-    private final INotifyStateChange iNotifyStateChange;
+    private final IPublishStateChange iPublishStateChange;
 
     @Override
-    public void createItem(TodoItem todoItem) {
-
+    public Mono<TodoItem> createItem(CreateTodoItemRequest todoItem) {
+        return iInvokeOtherService.getOtherValue()
+                                  .map(otherValue -> new NewTodoItem(todoItem.getName(), todoItem.getState(), otherValue))
+                                  .flatMap(iStoreItemState::createItem)
+                                  .map(ItemCreatedEvent::new)
+                                  .zipWhen(iPublishStateChange::publish)
+                                  .map(objects -> objects.mapT1(ItemCreatedEvent::getItem))
+                                  .map(Tuple2::getT1);
     }
 
     @Override
