@@ -46,7 +46,7 @@ public class TodoApp implements IGetThingsDone {
     @Override
     public Mono<Void> deleteById(int id) {
         return iStoreItemState.getById(id)
-                .map(todoItem -> new ItemDeletedEvent(id))
-                .flatMap(iPublishStateChange::publish);
+                              .map(todoItem -> new ItemDeletedEvent(id))
+                              .flatMap(iPublishStateChange::publish);
     }
 }

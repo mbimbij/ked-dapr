@@ -27,7 +27,6 @@ class TodoAppShould {
     private IInvokeOtherService iInvokeOtherService;
     private IStoreItemState iStoreItemState;
     private IPublishStateChange iPublishStateChange;
-    private TodoApp todoApp;
 
     @BeforeEach
     void setUp() {
@@ -41,6 +40,8 @@ class TodoAppShould {
 
         todoApp = new TodoApp(iInvokeOtherService, iStoreItemState, iPublishStateChange);
     }
+
+    private TodoApp todoApp;
 
     @Test
     void invokeTheOtherService_andSaveState_andPublishEvent_whenCreateItem() {

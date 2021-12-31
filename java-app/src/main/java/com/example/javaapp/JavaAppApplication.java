@@ -5,8 +5,8 @@ import com.example.javaapp.core.IInvokeOtherService;
 import com.example.javaapp.core.IPublishStateChange;
 import com.example.javaapp.core.IStoreItemState;
 import com.example.javaapp.core.TodoApp;
-import com.example.javaapp.outputadapter.DaprStateChangePublisher;
 import com.example.javaapp.outputadapter.DaprOtherServiceInvoker;
+import com.example.javaapp.outputadapter.DaprStateChangePublisher;
 import com.example.javaapp.outputadapter.DaprStateStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -49,7 +49,7 @@ public class JavaAppApplication {
     public WebClient webClient(@Value("${dapr.port}") int daprPort) {
         String daprSidecarUrl = String.format("http://localhost:%d", daprPort);
         return WebClient.builder()
-                 .baseUrl(daprSidecarUrl)
-                 .build();
+                        .baseUrl(daprSidecarUrl)
+                        .build();
     }
 }

@@ -5,7 +5,6 @@ import com.example.javaapp.core.IStoreItemState;
 import com.example.javaapp.core.NewTodoItem;
 import com.example.javaapp.core.State;
 import com.example.javaapp.core.TodoItem;
-import com.example.javaapp.inputadapter.TodoItemResponseDto;
 import com.example.javaapp.outputadapter.DaprStateStore.BindingToItemMapper;
 import com.example.javaapp.outputadapter.DaprStateStore.DaprItem;
 import com.example.javaapp.outputadapter.DaprStateStore.DaprSaveItemRequest;

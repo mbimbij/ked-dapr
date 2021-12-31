@@ -5,8 +5,12 @@ import reactor.core.publisher.Mono;
 
 public interface IStoreItemState {
     Mono<TodoItem> createItem(NewTodoItem todoItem);
+
     Mono<TodoItem> getById(int id);
+
     Flux<TodoItem> getAll();
+
     Mono<TodoItem> updateItem(TodoItem updatedTodoItem);
-    Mono<Void>  deleteById(int id);
+
+    Mono<Void> deleteById(int id);
 }
