@@ -10,13 +10,13 @@ import lombok.Value;
 @Value
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 @AllArgsConstructor
-public class CreateItemResponseDto {
+public class TodoItemResponseDto {
     int id;
     String name;
     State state;
     String otherValue;
 
-    CreateItemResponseDto(TodoItem todoItem) {
+    TodoItemResponseDto(TodoItem todoItem) {
         id = todoItem.getId();
         name = todoItem.getName();
         state = todoItem.getState();

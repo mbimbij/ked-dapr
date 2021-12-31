@@ -5,6 +5,7 @@ import com.example.javaapp.core.IStoreItemState;
 import com.example.javaapp.core.NewTodoItem;
 import com.example.javaapp.core.State;
 import com.example.javaapp.core.TodoItem;
+import com.example.javaapp.inputadapter.TodoItemResponseDto;
 import com.example.javaapp.outputadapter.DaprStateStore.BindingToItemMapper;
 import com.example.javaapp.outputadapter.DaprStateStore.DaprItem;
 import com.example.javaapp.outputadapter.DaprStateStore.DaprSaveItemRequest;
@@ -186,6 +187,19 @@ class DaprStateStoreShouldIT {
 
     @Test
     void returnAnEmptyFlux_whenGetAllItem_onEmptyBase() {
+        // GIVEN
+        String uri = STATESTORE_URI_FORMAT.formatted(statestoreName);
+
+        // WHEN
+        Flux<TodoItem> allItems = daprStateStore.getAll();
+
+        // THEN
+        StepVerifier.create(allItems)
+                    .verifyComplete();
+    }
+
+    @Test
+    void returnAFluxOfItems_whenGetAllItem_onNonEmptyBase() {
         // GIVEN
         String uri = STATESTORE_URI_FORMAT.formatted(statestoreName);
         DaprSaveItemRequest item1 = new DaprSaveItemRequest(String.valueOf(itemId1), new DaprItem("name1", State.TODO.toString(), otherValue));

@@ -15,7 +15,7 @@ public class AppRestController {
     private IGetThingsDone iGetThingsDone;
 
     @PostMapping(path = "/items", produces = MediaType.APPLICATION_NDJSON_VALUE)
-    public Mono<CreateItemResponseDto> createItem(@RequestBody CreateItemRequestDto createItemDto) {
-        return iGetThingsDone.createItem(createItemDto.toDto()).map(CreateItemResponseDto::new);
+    public Mono<TodoItemResponseDto> createItem(@RequestBody CreateItemRequestDto createItemDto) {
+        return iGetThingsDone.createItem(createItemDto.toDto()).map(TodoItemResponseDto::new);
     }
 }
