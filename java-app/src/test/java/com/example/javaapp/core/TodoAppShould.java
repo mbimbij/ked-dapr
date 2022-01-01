@@ -106,16 +106,17 @@ class TodoAppShould {
         // GIVEN
         TodoItem previousItemState = new TodoItem(itemId, name, state, otherValue);
         doReturn(Mono.just(previousItemState)).when(iStoreItemState).getById(anyInt());
-        TodoItem newItemState = new TodoItem(itemId, name, DOING, otherValue);
+        UpdateTodoItemRequest updateTodoItemRequest = new UpdateTodoItemRequest(itemId, name, DOING);
+        TodoItem newItem = new TodoItem(itemId, name, DOING, otherValue);
 
         // WHEN
-        todoApp.updateItem(newItemState).block();
-        ItemUpdatedEvent expectedEvent = new ItemUpdatedEvent(newItemState);
+        todoApp.updateItem(updateTodoItemRequest).block();
+        ItemUpdatedEvent expectedEvent = new ItemUpdatedEvent(newItem);
 
         // THEN
         SoftAssertions.assertSoftly(softAssertions -> {
             softAssertions.assertThatCode(() -> verify(iInvokeOtherService).getOtherValue()).doesNotThrowAnyException();
-            softAssertions.assertThatCode(() -> verify(iStoreItemState).updateItem(eq(newItemState))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).updateItem(eq(newItem))).doesNotThrowAnyException();
             softAssertions.assertThatCode(() -> verify(iPublishStateChange)
                     .publish(TestUtil.argThat(domainEvent -> assertThat(domainEvent).isEqualTo(expectedEvent)))).doesNotThrowAnyException();
         });

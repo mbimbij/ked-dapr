@@ -3,9 +3,8 @@ package com.example.javaapp.core;
 import lombok.Value;
 
 @Value
-public class TodoItem {
+public class UpdateTodoItemRequest {
     int id;
     String name;
     State state;
-    String otherValue;
 }

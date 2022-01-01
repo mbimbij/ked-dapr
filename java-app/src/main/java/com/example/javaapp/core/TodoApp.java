@@ -1,6 +1,5 @@
 package com.example.javaapp.core;
 
-import com.example.javaapp.core.TodoItem.TodoItemBuilder;
 import com.example.javaapp.core.events.ItemCreatedEvent;
 import com.example.javaapp.core.events.ItemDeletedEvent;
 import com.example.javaapp.core.events.ItemUpdatedEvent;
@@ -9,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -31,8 +28,8 @@ public class TodoApp implements IGetThingsDone {
     }
 
     @Override
-    public Optional<TodoItem> getById(int id) {
-        return Optional.empty();
+    public Mono<TodoItem> getById(int id) {
+        return iStoreItemState.getById(id);
     }
 
     @Override
@@ -41,10 +38,12 @@ public class TodoApp implements IGetThingsDone {
     }
 
     @Override
-    public Mono<TodoItem> updateItem(TodoItem updatedTodoItem) {
+    public Mono<TodoItem> updateItem(UpdateTodoItemRequest updatedTodoItem) {
         Mono<TodoItem> updatedItemWithOtherValue = iInvokeOtherService.getOtherValue()
-                                                                      .map(updatedTodoItem.toBuilder()::otherValue)
-                                                                      .map(TodoItemBuilder::build);
+                                                                      .map(otherValue -> new TodoItem(updatedTodoItem.getId(),
+                                                                                                      updatedTodoItem.getName(),
+                                                                                                      updatedTodoItem.getState(),
+                                                                                                      otherValue));
 
 //        iStoreItemState.getById(updatedTodoItem.getId())
 //                       .zipWith(updatedItemWithOtherValue)
