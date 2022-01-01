@@ -9,10 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.example.javaapp.core.State.DOING;
@@ -32,7 +31,7 @@ class TodoAppShould {
     private final State state = State.TODO;
     private final String otherValue = "someOtherValue";
     private IInvokeOtherService iInvokeOtherService;
-    private IStoreItemState iStoreItemState;
+    private StateStoreMock iStoreItemState;
     private IPublishStateChange iPublishStateChange;
 
     @BeforeEach
@@ -122,17 +121,39 @@ class TodoAppShould {
         });
     }
 
-    private static class StateStoreMock implements IStoreItemState {
-        private final int itemId;
-    private Map<Integer,TodoItem> items = new HashMap<>();
+    @Test
+    void getAllItems() {
+        // GIVEN
+        CreateTodoItemRequest createTodoItemRequest1 = new CreateTodoItemRequest("plop", state);
+        CreateTodoItemRequest createTodoItemRequest2 = new CreateTodoItemRequest("other", state);
+        todoApp.createItem(createTodoItemRequest1)
+               .doOnSuccess(todoItem -> iStoreItemState.setNextItemId(778))
+               .then(todoApp.createItem(createTodoItemRequest2))
+               .block();
+        TodoItem expectedItem1 = new TodoItem(0, "plop", state, otherValue);
+        TodoItem expectedItem2 = new TodoItem(0, "other", state, otherValue);
 
-        private StateStoreMock(int itemId) {
-            this.itemId = itemId;
+        // WHEN
+        Flux<TodoItem> allItems = todoApp.getAll();
+
+        // THEN
+        StepVerifier.create(allItems)
+                    .assertNext(todoItem -> assertThat(todoItem).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedItem1))
+                    .assertNext(todoItem -> assertThat(todoItem).usingRecursiveComparison().ignoringFields("id").isEqualTo(expectedItem2))
+                    .verifyComplete();
+    }
+
+    private static class StateStoreMock implements IStoreItemState {
+        private int nextItemId;
+        private Map<Integer, TodoItem> items = new HashMap<>();
+
+        private StateStoreMock(int nextItemId) {
+            this.nextItemId = nextItemId;
         }
 
         @Override
         public Mono<TodoItem> createItem(NewTodoItem todoItem) {
-            TodoItem item = new TodoItem(itemId, todoItem.getName(), todoItem.getState(), todoItem.getOtherValue());
+            TodoItem item = new TodoItem(nextItemId, todoItem.getName(), todoItem.getState(), todoItem.getOtherValue());
             items.put(item.getId(), item);
             return Mono.just(item);
         }
@@ -157,6 +178,10 @@ class TodoAppShould {
         public Mono<Void> deleteById(int id) {
             items.remove(id);
             return Mono.empty();
+        }
+
+        public void setNextItemId(int nextItemId) {
+            this.nextItemId = nextItemId;
         }
     }
 }

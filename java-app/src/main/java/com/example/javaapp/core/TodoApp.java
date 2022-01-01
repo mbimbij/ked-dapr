@@ -6,10 +6,10 @@ import com.example.javaapp.core.events.ItemDeletedEvent;
 import com.example.javaapp.core.events.ItemUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -36,8 +36,8 @@ public class TodoApp implements IGetThingsDone {
     }
 
     @Override
-    public List<TodoItem> getAll() {
-        return null;
+    public Flux<TodoItem> getAll() {
+        return iStoreItemState.getAll();
     }
 
     @Override
