@@ -1,7 +1,9 @@
 package com.example.javaapp.core;
 
+import com.example.javaapp.core.TodoItem.TodoItemBuilder;
 import com.example.javaapp.core.events.ItemCreatedEvent;
 import com.example.javaapp.core.events.ItemDeletedEvent;
+import com.example.javaapp.core.events.ItemUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -39,8 +41,26 @@ public class TodoApp implements IGetThingsDone {
     }
 
     @Override
-    public TodoItem updateItem(TodoItem updatedTodoItem) {
-        return null;
+    public Mono<TodoItem> updateItem(TodoItem updatedTodoItem) {
+        Mono<TodoItem> updatedItemWithOtherValue = iInvokeOtherService.getOtherValue()
+                                                                      .map(updatedTodoItem.toBuilder()::otherValue)
+                                                                      .map(TodoItemBuilder::build);
+
+//        iStoreItemState.getById(updatedTodoItem.getId())
+//                       .zipWith(updatedItemWithOtherValue)
+//                       .doOnSuccess(objects -> iStoreItemState.updateItem(objects.getT2()))
+//                       .map(oldAndNewItems -> oldAndNewItems.mapT1(TodoItem::getState).mapT2(TodoItem::getState))
+//                       .flatMap(oldAndNewStates -> {
+//                           State oldState = oldAndNewStates.getT1();
+//                           State newState = oldAndNewStates.getT2();
+//                           if (TODO.equals(oldState) && DOING.equals(newState)) {
+//                               return Mono.just(new ItemStartedEvent(updatedTodoItem.getId()));
+//                           } else return Mono.empty();
+//                       })
+        return updatedItemWithOtherValue.doOnNext(iStoreItemState::updateItem)
+                .map(ItemUpdatedEvent::new)
+                .doOnNext(iPublishStateChange::publish)
+                .then(updatedItemWithOtherValue);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.example.javaapp.core;
 
 import com.example.javaapp.core.events.ItemCreatedEvent;
 import com.example.javaapp.core.events.ItemDeletedEvent;
+import com.example.javaapp.core.events.ItemUpdatedEvent;
 import com.example.javaapp.utils.TestUtil;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,12 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.example.javaapp.core.State.DOING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -81,7 +88,6 @@ class TodoAppShould {
     @Test
     void notDeleteItem_whenItemDoesNotExist() {
         // GIVEN
-        TodoItem todoItem = new TodoItem(itemId, name, state, otherValue);
         doReturn(Mono.empty()).when(iStoreItemState).getById(anyInt());
 
         // WHEN
@@ -96,8 +102,29 @@ class TodoAppShould {
         });
     }
 
+    @Test
+    void sendItemUpdatedEvent_whenUpdateFromTodoToDoing() {
+        // GIVEN
+        TodoItem previousItemState = new TodoItem(itemId, name, state, otherValue);
+        doReturn(Mono.just(previousItemState)).when(iStoreItemState).getById(anyInt());
+        TodoItem newItemState = new TodoItem(itemId, name, DOING, otherValue);
+
+        // WHEN
+        todoApp.updateItem(newItemState).block();
+        ItemUpdatedEvent expectedEvent = new ItemUpdatedEvent(newItemState);
+
+        // THEN
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThatCode(() -> verify(iInvokeOtherService).getOtherValue()).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).updateItem(eq(newItemState))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iPublishStateChange)
+                    .publish(TestUtil.argThat(domainEvent -> assertThat(domainEvent).isEqualTo(expectedEvent)))).doesNotThrowAnyException();
+        });
+    }
+
     private static class StateStoreMock implements IStoreItemState {
         private final int itemId;
+    private Map<Integer,TodoItem> items = new HashMap<>();
 
         private StateStoreMock(int itemId) {
             this.itemId = itemId;
@@ -105,27 +132,31 @@ class TodoAppShould {
 
         @Override
         public Mono<TodoItem> createItem(NewTodoItem todoItem) {
-            return Mono.just(new TodoItem(itemId, todoItem.getName(), todoItem.getState(), todoItem.getOtherValue()));
+            TodoItem item = new TodoItem(itemId, todoItem.getName(), todoItem.getState(), todoItem.getOtherValue());
+            items.put(item.getId(), item);
+            return Mono.just(item);
         }
 
         @Override
         public Mono<TodoItem> getById(int id) {
-            return null;
+            return Mono.just(items.get(id));
         }
 
         @Override
         public Flux<TodoItem> getAll() {
-            return null;
+            return Flux.fromIterable(items.values());
         }
 
         @Override
         public Mono<TodoItem> updateItem(TodoItem updatedTodoItem) {
-            return null;
+            items.put(updatedTodoItem.getId(), updatedTodoItem);
+            return Mono.just(updatedTodoItem);
         }
 
         @Override
         public Mono<Void> deleteById(int id) {
-            return null;
+            items.remove(id);
+            return Mono.empty();
         }
     }
 }

@@ -12,7 +12,7 @@ public interface IGetThingsDone {
 
     List<TodoItem> getAll();
 
-    TodoItem updateItem(TodoItem updatedTodoItem);
+    Mono<TodoItem> updateItem(TodoItem updatedTodoItem);
 
     Mono<Void> deleteById(int id);
 }
