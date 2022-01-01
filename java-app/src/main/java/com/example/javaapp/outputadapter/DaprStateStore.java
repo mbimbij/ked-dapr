@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class DaprStateStore implements IStoreItemState {
     private static int nextItemId = 0;
     private final WebClient webClient;
@@ -99,14 +101,13 @@ public class DaprStateStore implements IStoreItemState {
     public Mono<TodoItem> deleteById(int id) {
         String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, id);
         Mono<TodoItem> existingItem = getById(id);
-        return existingItem.zipWith(webClient.delete()
-                                      .uri(uri)
-                                      .retrieve()
-                                      .onStatus(HttpStatus::isError, ClientResponse::createException)
-                                      .bodyToMono(Void.class))
-                .map(Tuple2::getT1);
-//        return
-//                        .then(existingItem);
+        return existingItem.zipWhen(todoItem -> webClient.delete()
+                                                         .uri(uri)
+                                                         .retrieve()
+                                                         .onStatus(HttpStatus::isError, ClientResponse::createException)
+                                                         .toBodilessEntity())
+
+                           .map(Tuple2::getT1);
     }
 
     @Value
