@@ -56,15 +56,15 @@ public class TodoApp implements IGetThingsDone {
 //                               return Mono.just(new ItemStartedEvent(updatedTodoItem.getId()));
 //                           } else return Mono.empty();
 //                       })
-        return updatedItemWithOtherValue.doOnNext(iStoreItemState::updateItem)
+        return updatedItemWithOtherValue.flatMap(iStoreItemState::updateItem)
                 .map(ItemUpdatedEvent::new)
-                .doOnNext(iPublishStateChange::publish)
+                .flatMap(iPublishStateChange::publish)
                 .then(updatedItemWithOtherValue);
     }
 
     @Override
     public Mono<Void> deleteById(int id) {
-        return iStoreItemState.getById(id)
+        return iStoreItemState.deleteById(id)
                               .map(todoItem -> new ItemDeletedEvent(id))
                               .flatMap(iPublishStateChange::publish);
     }

@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.Base64;
 import java.util.List;
@@ -95,13 +96,17 @@ public class DaprStateStore implements IStoreItemState {
     }
 
     @Override
-    public Mono<Void> deleteById(int id) {
+    public Mono<TodoItem> deleteById(int id) {
         String uri = STATESTORE_KEY_URI_FORMAT.formatted(statestoreName, id);
-        return webClient.delete()
-                        .uri(uri)
-                        .retrieve()
-                        .onStatus(HttpStatus::isError, ClientResponse::createException)
-                        .bodyToMono(Void.class);
+        Mono<TodoItem> existingItem = getById(id);
+        return existingItem.zipWith(webClient.delete()
+                                      .uri(uri)
+                                      .retrieve()
+                                      .onStatus(HttpStatus::isError, ClientResponse::createException)
+                                      .bodyToMono(Void.class))
+                .map(Tuple2::getT1);
+//        return
+//                        .then(existingItem);
     }
 
     @Value

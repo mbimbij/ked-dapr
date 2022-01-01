@@ -68,8 +68,7 @@ class TodoAppShould {
     @Test
     void deleteItem_whenItemExists() {
         // GIVEN
-        TodoItem todoItem = new TodoItem(itemId, name, state, otherValue);
-        doReturn(Mono.just(todoItem)).when(iStoreItemState).getById(anyInt());
+        iStoreItemState.createItem(new NewTodoItem(name, state, otherValue));
 
         // WHEN
         todoApp.deleteById(itemId).block();
@@ -78,9 +77,8 @@ class TodoAppShould {
         // THEN
         SoftAssertions.assertSoftly(softAssertions -> {
             softAssertions.assertThatCode(() -> verify(iInvokeOtherService, never()).getOtherValue()).doesNotThrowAnyException();
-            softAssertions.assertThatCode(() -> verify(iStoreItemState).getById(eq(itemId))).doesNotThrowAnyException();
-            softAssertions.assertThatCode(() -> verify(iPublishStateChange)
-                    .publish(TestUtil.argThat(domainEvent -> assertThat(domainEvent).isEqualTo(expectedEvent)))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).deleteById(eq(itemId))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iPublishStateChange).publish(eq(expectedEvent))).doesNotThrowAnyException();
         });
     }
 
@@ -96,7 +94,7 @@ class TodoAppShould {
         // THEN
         SoftAssertions.assertSoftly(softAssertions -> {
             softAssertions.assertThatCode(() -> verify(iInvokeOtherService, never()).getOtherValue()).doesNotThrowAnyException();
-            softAssertions.assertThatCode(() -> verify(iStoreItemState).getById(eq(itemId))).doesNotThrowAnyException();
+            softAssertions.assertThatCode(() -> verify(iStoreItemState).deleteById(eq(itemId))).doesNotThrowAnyException();
             softAssertions.assertThatCode(() -> verify(iPublishStateChange, never()).publish(any())).doesNotThrowAnyException();
         });
     }
@@ -176,9 +174,15 @@ class TodoAppShould {
         }
 
         @Override
-        public Mono<Void> deleteById(int id) {
+        public Mono<TodoItem> deleteById(int id) {
+            TodoItem todoItem = items.get(id);
             items.remove(id);
-            return Mono.empty();
+            return Mono.justOrEmpty(todoItem);
+//            if(todoItem == null){
+//                return Mono.empty();
+//            }else{
+//                return Mono.just(todoItem);
+//            }
         }
 
         public void setNextItemId(int nextItemId) {

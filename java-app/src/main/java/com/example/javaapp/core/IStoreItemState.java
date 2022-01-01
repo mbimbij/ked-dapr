@@ -12,5 +12,5 @@ public interface IStoreItemState {
 
     Mono<TodoItem> updateItem(TodoItem updatedTodoItem);
 
-    Mono<Void> deleteById(int id);
+    Mono<TodoItem> deleteById(int id);
 }

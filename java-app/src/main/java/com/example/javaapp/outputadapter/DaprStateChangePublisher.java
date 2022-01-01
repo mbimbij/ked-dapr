@@ -14,6 +14,6 @@ public class DaprStateChangePublisher implements IPublishStateChange {
 
     @Override
     public Mono<Void> publish(DomainEvent domainEvent) {
-        return Mono.empty();
+        return Mono.empty().then();
     }
 }
